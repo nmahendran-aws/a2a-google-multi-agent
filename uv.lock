@@ -1622,15 +1622,21 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "a2a-sdk" },
+    { name = "fastapi" },
     { name = "google-adk" },
     { name = "gradio" },
+    { name = "python-multipart" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "a2a-sdk", specifier = ">=0.2.16" },
+    { name = "fastapi", specifier = ">=0.109.0" },
     { name = "google-adk", specifier = "==1.15.1" },
     { name = "gradio", specifier = ">=5.38.2" },
+    { name = "python-multipart", specifier = ">=0.0.6" },
+    { name = "uvicorn", specifier = ">=0.25.0" },
 ]
 
 [[package]]

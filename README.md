@@ -106,33 +106,27 @@ gcloud run deploy burger-agent \
     --port=8080 \
     --allow-unauthenticated \
     --min 1 \
-    --region us-central1 \
-    --update-env-vars GOOGLE_CLOUD_LOCATION=us-central1 \
-    --update-env-vars GOOGLE_CLOUD_PROJECT={your-project-id}
-
-    gcloud run deploy burger-agent-east \
-    --source remote_seller_agents/burger_agent \
-    --port=8080 \
-    --allow-unauthenticated \
-    --min 1 \
     --region us-east4 \
     --update-env-vars GOOGLE_CLOUD_LOCATION=us-east4 \
-    --update-env-vars GOOGLE_CLOUD_PROJECT=mahen-projects
+    --update-env-vars GOOGLE_CLOUD_PROJECT={your-project-id}
 ```
+
+
 
 ### Deploy the Pizza Agent - Cloud Run
 
 Run the following command
 
 ```bash
-gcloud run deploy pizza-agent-east4 \
+```bash
+gcloud run deploy pizza-agent \
     --source remote_seller_agents/pizza_agent \
     --port=8080 \
     --allow-unauthenticated \
     --min 1 \
-    --region us-east4 \   
-    --update-env-vars GOOGLE_CLOUD_LOCATION=us-east4 \   
-    --update-env-vars GOOGLE_CLOUD_PROJECT=mahen-projects   
+    --region us-east4 \
+    --update-env-vars GOOGLE_CLOUD_LOCATION=us-east4 \
+    --update-env-vars GOOGLE_CLOUD_PROJECT={your-project-id}
 ```
 
 ### Deploy Purchasing Concierge Agent - Agent Engine
@@ -140,7 +134,7 @@ gcloud run deploy pizza-agent-east4 \
 1. Create the staging bucket first
 
     ```bash
-    gcloud storage buckets create gs://purchasing-concierge-{your-project-id} --location=us-central1
+    gcloud storage buckets create gs://purchasing-concierge-{your-project-id} --location=us-east4
     ```
 
 2. Copy the `.env.example` to `.env`.
@@ -149,7 +143,7 @@ gcloud run deploy pizza-agent-east4 \
     ```bash
     GOOGLE_GENAI_USE_VERTEXAI=TRUE
     GOOGLE_CLOUD_PROJECT={your-project-id}
-    GOOGLE_CLOUD_LOCATION=us-central1
+    GOOGLE_CLOUD_LOCATION=us-east4
     STAGING_BUCKET=gs://purchasing-concierge-{your-project-id}
     PIZZA_SELLER_AGENT_URL={your-pizza-agent-url}
     BURGER_SELLER_AGENT_URL={your-burger-agent-url}
@@ -172,3 +166,18 @@ gcloud run deploy pizza-agent-east4 \
 uv sync --frozen
 uv run purchasing_concierge_ui.py
 ```
+
+## Troubleshooting
+
+### `invalid_grant` Error
+If you encounter an `invalid_grant` error, your local credentials may have expired or be invalid. Run the following command to refresh them:
+
+```bash
+gcloud auth application-default login
+```
+
+### UI Connection Error (404 Not Found)
+If `purchasing_concierge_ui.py` fails with a 404 error despite the agent engine being deployed, ensure:
+1. You have run `gcloud auth application-default login`.
+2. The `AGENT_ENGINE_RESOURCE_NAME` in `.env` matches the output from the deployment script.
+3. Your local region configuration matches the deployment (e.g., `us-east4`). The UI script explicitly initializes `vertexai` with the region from `.env` to prevent default mismatches.
