@@ -13,6 +13,7 @@ dependencies = [
     "python-multipart>=0.0.6",
     "cloud-sql-python-connector>=1.19.0",
     "pymysql>=1.1.2",
+    "fastmcp>=2.11.2",
 ]
 
 [tool.hatch.build.targets.wheel]

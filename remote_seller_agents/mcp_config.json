@@ -1,0 +1,20 @@
+{
+    "mcpServers": {
+        "product-prices": {
+            "command": "uv",
+            "args": [
+                "run",
+                "python",
+                "-m",
+                "remote_seller_agents.mcp_server_products"
+            ],
+            "cwd": "/Users/mahen/learnings/AI/ai-agent/agent-google/a2a/purchasing-concierge-a2a",
+            "env": {
+                "CLOUDSQL_DB_TYPE": "mysql",
+                "CLOUDSQL_DB_NAME": "agentic-db",
+                "CLOUDSQL_USER": "agentic-db",
+                "CLOUDSQL_INSTANCE_CONNECTION_NAME": "mahen-projects:us-east4:agentic-db"
+            }
+        }
+    }
+}

@@ -32,6 +32,14 @@ BURGER_PRODUCTS = [
     ("burger-004", "Spicy Cajun Burger", "85000", "IDR"),
 ]
 
+PIZZA_PRODUCTS = [
+    ("pizza-001", "Margherita Pizza", "100000", "IDR"),
+    ("pizza-002", "Pepperoni Pizza", "140000", "IDR"),
+    ("pizza-003", "Hawaiian Pizza", "110000", "IDR"),
+    ("pizza-004", "Veggie Pizza", "100000", "IDR"),
+    ("pizza-005", "BBQ Chicken Pizza", "130000", "IDR"),
+]
+
 
 def get_connection():
     """Get database connection based on configuration."""
@@ -147,11 +155,12 @@ def ensure_database_exists():
         pass
 
 
-def create_table(cursor):
-    """Create product-list table if it doesn't exist."""
+
+def create_table(cursor, table_name="product-list"):
+    """Create product table if it doesn't exist."""
     if DB_TYPE == "postgresql":
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS "product-list" (
+        create_table_sql = f"""
+        CREATE TABLE IF NOT EXISTS "{table_name}" (
             "itemId" VARCHAR(50) PRIMARY KEY,
             "ItemName" VARCHAR(255) NOT NULL,
             "Price" VARCHAR(50) NOT NULL,
@@ -159,8 +168,8 @@ def create_table(cursor):
         )
         """
     else:  # mysql
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS `product-list` (
+        create_table_sql = f"""
+        CREATE TABLE IF NOT EXISTS `{table_name}` (
             `itemId` VARCHAR(50) PRIMARY KEY,
             `ItemName` VARCHAR(255) NOT NULL,
             `Price` VARCHAR(50) NOT NULL,
@@ -169,14 +178,14 @@ def create_table(cursor):
         """
     
     cursor.execute(create_table_sql)
-    print("✓ Table 'product-list' created/verified")
+    print(f"✓ Table '{table_name}' created/verified")
 
 
-def seed_data(cursor, conn):
-    """Insert burger menu data."""
+def seed_data(cursor, conn, products, table_name="product-list"):
+    """Insert product data."""
     if DB_TYPE == "postgresql":
-        insert_sql = """
-        INSERT INTO "product-list" ("itemId", "ItemName", "Price", "CurrencyType")
+        insert_sql = f"""
+        INSERT INTO "{table_name}" ("itemId", "ItemName", "Price", "CurrencyType")
         VALUES (%s, %s, %s, %s)
         ON CONFLICT ("itemId") DO UPDATE SET
             "ItemName" = EXCLUDED."ItemName",
@@ -184,8 +193,8 @@ def seed_data(cursor, conn):
             "CurrencyType" = EXCLUDED."CurrencyType"
         """
     else:  # mysql
-        insert_sql = """
-        INSERT INTO `product-list` (`itemId`, `ItemName`, `Price`, `CurrencyType`)
+        insert_sql = f"""
+        INSERT INTO `{table_name}` (`itemId`, `ItemName`, `Price`, `CurrencyType`)
         VALUES (%s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
             `ItemName` = VALUES(`ItemName`),
@@ -193,23 +202,23 @@ def seed_data(cursor, conn):
             `CurrencyType` = VALUES(`CurrencyType`)
         """
     
-    for product in BURGER_PRODUCTS:
+    for product in products:
         cursor.execute(insert_sql, product)
-        print(f"✓ Inserted: {product[1]} - {product[3]} {product[2]}")
+        print(f"✓ Inserted into {table_name}: {product[1]} - {product[3]} {product[2]}")
     
     conn.commit()
-    print(f"\n✓ Successfully seeded {len(BURGER_PRODUCTS)} products")
+    print(f"\n✓ Successfully seeded {len(products)} products to {table_name}")
 
 
-def verify_data(cursor):
+def verify_data(cursor, table_name="product-list"):
     """Verify inserted data."""
     if DB_TYPE == "postgresql":
-        cursor.execute('SELECT * FROM "product-list" ORDER BY "itemId"')
+        cursor.execute(f'SELECT * FROM "{table_name}" ORDER BY "itemId"')
     else:
-        cursor.execute('SELECT * FROM `product-list` ORDER BY `itemId`')
+        cursor.execute(f'SELECT * FROM `{table_name}` ORDER BY `itemId`')
     
     rows = cursor.fetchall()
-    print(f"\n📊 Current data in product-list table:")
+    print(f"\n📊 Current data in {table_name} table:")
     print("-" * 80)
     for row in rows:
         print(f"  {row[0]}: {row[1]} - {row[3]} {row[2]}")
@@ -243,14 +252,16 @@ def main():
         if DB_TYPE == "mysql":
             create_database_if_not_exists(cursor)
         
-        # Create table
-        create_table(cursor)
+        # Create tables and seed data
+        print("\n=== BURGER MENU ===")
+        create_table(cursor, "product-list")
+        seed_data(cursor, conn, BURGER_PRODUCTS, "product-list")
+        verify_data(cursor, "product-list")
         
-        # Seed data
-        seed_data(cursor, conn)
-        
-        # Verify
-        verify_data(cursor)
+        print("\n=== PIZZA MENU ===")
+        create_table(cursor, "pizza-list")
+        seed_data(cursor, conn, PIZZA_PRODUCTS, "pizza-list")
+        verify_data(cursor, "pizza-list")
         
         cursor.close()
         conn.close()

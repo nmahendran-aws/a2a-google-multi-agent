@@ -22,6 +22,9 @@ from pydantic import BaseModel
 import uuid
 from dotenv import load_dotenv
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mcp_server_products import get_product_menu
 
 load_dotenv()
 
@@ -63,6 +66,31 @@ def create_pizza_order(order_items: list[OrderItem]) -> str:
     return f"Order {order.model_dump()} has been created"
 
 
+@tool
+def get_pizza_menu_via_mcp() -> str:
+    """
+    Fetches the current pizza menu from the database using the MCP server.
+    Returns a formatted string with pizza names and prices.
+    
+    Returns:
+        str: Formatted pizza menu (e.g., "- Margherita Pizza: IDR 100K")
+    """
+    try:
+        menu_items = get_product_menu("pizza-list")
+        lines = []
+        for item in menu_items:
+            price = item["Price"]
+            # Format price (e.g., "100000" -> "100K")
+            if len(price) >= 3:
+                price_formatted = f"{int(price)//1000}K"
+            else:
+                price_formatted = price
+            lines.append(f"- {item['ItemName']}: {item['CurrencyType']} {price_formatted}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error fetching menu: {str(e)}"
+
+
 class PizzaSellerAgent:
     SYSTEM_INSTRUCTION = """
 # INSTRUCTIONS
@@ -75,11 +103,7 @@ Do not attempt to answer unrelated questions or use tools for other purposes.
 # CONTEXT
 
 Provided below is the available pizza menu and it's related price:
-- Margherita Pizza: IDR 100K
-- Pepperoni Pizza: IDR 140K
-- Hawaiian Pizza: IDR 110K
-- Veggie Pizza: IDR 100K
-- BBQ Chicken Pizza: IDR 130K
+{menu_data}
 
 # RULES
 
@@ -98,7 +122,7 @@ Provided below is the available pizza menu and it's related price:
             location=os.getenv("GOOGLE_CLOUD_LOCATION"),
             project=os.getenv("GOOGLE_CLOUD_PROJECT"),
         )
-        self.tools = [create_pizza_order]
+        self.tools = [create_pizza_order, get_pizza_menu_via_mcp]
         self.graph = create_react_agent(
             self.model,
             tools=self.tools,
@@ -107,10 +131,24 @@ Provided below is the available pizza menu and it's related price:
         )
 
     def invoke(self, query, sessionId) -> str:
+        # Fetch menu from MCP server via tool
+        menu_data = get_pizza_menu_via_mcp()
+        
+        # Update system instruction with fresh menu data
+        prompt = self.SYSTEM_INSTRUCTION.format(menu_data=menu_data)
+        
+        # Recreate graph with updated prompt
+        graph = create_react_agent(
+            self.model,
+            tools=self.tools,
+            checkpointer=memory,
+            prompt=prompt,
+        )
+        
         config = {"configurable": {"thread_id": sessionId}}
-        self.graph.invoke({"messages": [("user", query)]}, config)
-        return self.get_agent_response(config)
-
-    def get_agent_response(self, config):
-        current_state = self.graph.get_state(config)
+        graph.invoke({"messages": [("user", query)]}, config)
+        return self.get_agent_response_from_graph(graph, config)
+    
+    def get_agent_response_from_graph(self, graph, config):
+        current_state = graph.get_state(config)
         return current_state.values["messages"][-1].content
