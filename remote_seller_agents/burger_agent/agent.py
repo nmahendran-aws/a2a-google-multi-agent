@@ -21,6 +21,7 @@ from crewai.tools import tool
 from dotenv import load_dotenv
 import litellm
 import os
+from .db_tool import format_menu_for_display
 
 load_dotenv()
 
@@ -78,10 +79,7 @@ Received user query: {user_prompt}
 Session ID: {session_id}
 
 Provided below is the available burger menu and it's related price:
-- Classic Cheeseburger: IDR 85K
-- Double Cheeseburger: IDR 110K
-- Spicy Chicken Burger: IDR 80K
-- Spicy Cajun Burger: IDR 85K
+{menu_data}
 
 # RULES
 
@@ -126,7 +124,10 @@ Provided below is the available burger menu and it's related price:
             process=Process.sequential,
         )
 
-        inputs = {"user_prompt": query, "session_id": sessionId}
+        # Fetch menu from Cloud SQL
+        menu_data = format_menu_for_display()
+        
+        inputs = {"user_prompt": query, "session_id": sessionId, "menu_data": menu_data}
         response = crew.kickoff(inputs)
         return response
 
