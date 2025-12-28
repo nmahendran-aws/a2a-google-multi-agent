@@ -1,7 +1,5 @@
 # Purchasing Concierge A2A Demo
 
-> **⚠️ DISCLAIMER: THIS IS NOT AN OFFICIALLY SUPPORTED GOOGLE PRODUCT. THIS PROJECT IS INTENDED FOR DEMONSTRATION PURPOSES ONLY. IT IS NOT INTENDED FOR USE IN A PRODUCTION ENVIRONMENT.**
-
 This demo shows how to enable A2A (Agent2Agent) protocol communication between purchasing concierge agent with the remote pizza and burger seller agents using A2A Python SDK. Burger and Pizza seller agents is a independent agent that can be run on different server with different frameworks, in this demo example we, burger agent is built on top of Crew AI and pizza agent is built on top of LangGraph.
 
 Detailed tutorial about this repo: [Getting Started with Agent2Agent (A2A) Protocol: A Purchasing Concierge and Remote Seller Agent Interactions with Gemini on Cloud Run](https://codelabs.developers.google.com/intro-a2a-purchasing-concierge?utm_campaign=CDR_0x6a71b73a_default_b415667894&utm_medium=external&utm_source=blog)
